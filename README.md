@@ -16,6 +16,10 @@ This project implements a **real-time fraud detection and risk analytics platfor
 
 ---
 
+## System Architecture
+
+![Fraud Detection Architecture](/Fraud_spark_architecture.png)
+
 ## 🛠 Tech Stack
 
 | Layer | Technology |
