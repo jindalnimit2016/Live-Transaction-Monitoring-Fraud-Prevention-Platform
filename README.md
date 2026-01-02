@@ -1,6 +1,5 @@
 # Real-Time Intelligent Fraud Detection & Risk Analytics Platform
 
-![Architecture](architecture.png)
 
 ---
 
@@ -73,12 +72,144 @@ This project implements a **real-time fraud detection and risk analytics platfor
 ## 📂 Repository Structure
 
 ```text
-fraud-detection-streaming/
+fraud-detection/
 │
-├── streaming/          # Spark streaming code
-├── airflow/            # DAGs and Airflow orchestration
-├── configs/            # Configuration files (Postgres, Kafka)
-├── notebooks/          # Analysis & ML feature exploration
-├── README.md           # Project overview
-├── requirements.txt    # Dependencies
-└── architecture.png    # System architecture diagram
+├── streaming/
+│ ├── fraud_stream.py # Main PySpark streaming script
+│ ├── user_profiles_staging # Staging tables handling user profile updates
+│ └── merchant_profiles_staging
+│
+├── dags/
+│ └── fraud_stream_dag.py # Airflow DAG to schedule streaming job
+│
+├── requirements.txt # Python dependencies
+├── README.md
+├── config/
+│ └── db_config.py # DB connection params
+└── scripts/
+└── init_db.sql # PostgreSQL table creation scripts
+```
+---
+
+## Installation & Setup
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/<your-username>/fraud-detection.git
+cd fraud-detection
+```
+
+### 2. Set up Python environment
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3. Kafka Setup
+Download & start Kafka:
+```bash
+# Start Zookeeper
+bin/zookeeper-server-start.sh config/zookeeper.properties
+# Start Kafka broker
+bin/kafka-server-start.sh config/server.properties
+# Create topic
+bin/kafka-topics.sh --create --topic fraud_transactions --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1
+```
+
+### 4. PostgreSQL Setup
+```bash
+Create DB and tables:
+CREATE DATABASE fraud_db;
+-- User Profiles Table
+CREATE TABLE user_profiles (
+    user_id VARCHAR PRIMARY KEY,
+    home_country VARCHAR,
+    avg_amount FLOAT,
+    std_amount FLOAT,
+    normal_devices TEXT[],
+    last_transaction TIMESTAMP,
+    risk_score FLOAT
+);
+
+-- Merchant Profiles Table
+CREATE TABLE merchant_profiles (
+    merchant_id VARCHAR PRIMARY KEY,
+    avg_amount FLOAT,
+    txn_count INT,
+    category VARCHAR,
+    risk_score FLOAT
+);
+
+-- Fraud Transactions Table
+CREATE TABLE fraud_transactions (
+    transaction_id VARCHAR PRIMARY KEY,
+    user_id VARCHAR,
+    amount FLOAT,
+    currency VARCHAR,
+    merchant_id VARCHAR,
+    is_fraud INT,
+    timestamp TIMESTAMP
+);
+
+-- Fraud Alerts Table
+CREATE TABLE fraud_alerts (
+    alert_id SERIAL PRIMARY KEY,
+    transaction_id VARCHAR,
+    user_id VARCHAR,
+    fraud_type VARCHAR,
+    severity VARCHAR,
+    amount FLOAT,
+    created_at TIMESTAMP,
+    merchant_id VARCHAR,
+    country VARCHAR,
+    city VARCHAR,
+    device_type VARCHAR,
+    model_score FLOAT,
+    payment_method VARCHAR
+);
+```
+
+### 5. Elasticsearch & Kibana Setup
+```bash
+Start Elasticsearch:
+./bin/elasticsearch
+Start Kibana:
+./bin/kibana
+```
+
+Configure fraud_alerts index in Kibana for dashboards.
+
+### 6. Airflow Setup
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow
+pip install apache-airflow
+airflow db init
+airflow users create --username admin --password admin --role Admin --email admin@example.com --firstname Admin --lastname User
+airflow webserver --port 8080
+airflow scheduler
+```
+
+### 7. Run Streaming Job
+```bash
+python streaming/fraud_stream.py
+```
+
+## Future Improvements
+
+- Integrate ML models for anomaly detection.
+- Implement alert notification system (email/SMS) for high-severity frauds.
+- Expand to multi-region Kafka & Spark clusters for global scalability.
+- Add dashboard metrics for risk scoring trends over time.
+
+---
+
+## Author
+
+**Nimit Jindal**
+- Data Engineer | Python | Spark | Kafka | PostgreSQL | ML
+
+
+
+
